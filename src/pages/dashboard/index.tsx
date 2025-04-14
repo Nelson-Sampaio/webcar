@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, use } from "react";
+import { useEffect, useState, useContext } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
 
