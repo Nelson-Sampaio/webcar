@@ -1,10 +1,18 @@
 import { useEffect, useState, useContext } from "react";
 import { FiTrash2 } from "react-icons/fi";
-import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 
 import { Container } from "../../components/container";
 import { DashboardHeader } from "../../components/panelheader";
-import { db } from "../../services/firebaseConnection";
+import { db, storage } from "../../services/firebaseConnection";
 import { AuthContext } from "../../contexts/AuthContext";
 
 interface CarsProps {
@@ -58,11 +66,24 @@ export function Dashboard() {
     loadCars();
   }, [user]);
 
-async function handleDeletecar(id:string) {
-  const docRef = doc(db, "cars", id)
-  await deleteDoc(docRef);
-  setCars(cars.filter(car => car.id !== id));
-}
+  // função para deletar carro e suas imagens do storage e do firestore
+  async function handleDeleteCar(car: CarsProps) {
+    const itemCar = car;
+
+    const docRef = doc(db, "cars", itemCar.id);
+    await deleteDoc(docRef);
+
+    itemCar.images.map(async (image) => {
+      const imagePath = `images/${image.uid}/${image.name}`;
+      const imageRef = ref(storage, imagePath);
+      try {
+        await deleteObject(imageRef);
+        setCars(cars.filter((car) => car.id !== itemCar.id));
+      } catch (err) {
+        console.log("ERRO AO DELETAR IMAGEM");
+      }
+    });
+  }
 
   return (
     <Container>
@@ -72,7 +93,7 @@ async function handleDeletecar(id:string) {
         {cars.map((car) => (
           <section key={car.id} className="w-full bg-white rounded-lg relative">
             <button
-              onClick={() => handleDeletecar(car.id)}
+              onClick={() => handleDeleteCar(car)}
               className="absolute bg-white w-10 h-10 rounded-full flex items-center justify-center right-2 top-2 drop-shadow"
             >
               <FiTrash2 size={26} color="#000" />
@@ -85,9 +106,13 @@ async function handleDeletecar(id:string) {
             <p className="font-bold mt-1 px-2 mb-2">{car.name}</p>
 
             <div className="flex flex-col px-2">
-              <span className="text-zinc-700">Ano {car.year} |  {car.km} km</span>
+              <span className="text-zinc-700">
+                Ano {car.year} | {car.km} km
+              </span>
 
-              <strong className="text-black font-bold mt-4">R$ {car.price}</strong>
+              <strong className="text-black font-bold mt-4">
+                R$ {car.price}
+              </strong>
             </div>
 
             <div className="w-full h-px my-2 bg-slate-200"></div>
