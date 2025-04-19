@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { FaWhatsapp } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getDoc, doc } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
 import { Container } from "../../components/container";
 import { db } from "../../services/firebaseConnection";
+
+// Importe os estilos do Swiper
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/autoplay';
 
 interface ImageCarProps {
   uid: string;
@@ -32,7 +39,7 @@ interface CarProps {
 export function CarDetail() {
   const { id } = useParams();
   const [car, setCar] = useState<CarProps>();
-
+  const navigate = useNavigate();
   const [sliderPerView, setSliderPerView] = useState<number>(2);
 
   useEffect(() => {
@@ -42,6 +49,10 @@ export function CarDetail() {
       }
       const docRef = doc(db, "cars", id);
       getDoc(docRef).then((snapshot) => {
+        if (!snapshot.exists()) {
+          navigate("/");
+        }
+
         setCar({
           id: snapshot.id,
           name: snapshot.data()?.name,
@@ -73,7 +84,6 @@ export function CarDetail() {
     handleResize();
 
     window.addEventListener("resize", handleResize);
-    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
     };
@@ -81,52 +91,68 @@ export function CarDetail() {
 
   return (
     <Container>
-      <Swiper
-        slidesPerView={sliderPerView}
-        pagination={{ clickable: true }}
-        navigation
-      >
-        {car?.images.map((image) => (
-          <SwiperSlide key={image.name}>
-            <img
-              className="w-full h-96 object-cover"
-              src={image.url}
-              alt={image.name}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      {car && (
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          slidesPerView={sliderPerView}
+          spaceBetween={30}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 5000 }}
+          className="mySwiper"
+        >
+          {car.images.map((image) => (
+            <SwiperSlide key={image.name}>
+              <div className="flex items-center justify-center h-96">
+                <img 
+                  src={image.url} 
+                  alt={`Imagem do carro ${car.name}`}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
 
       {car && (
         <main className="w-full p-6 my-4 bg-white rounded-lg">
-          // Campo que informa o nome e o valor do Veiculo
-          <div className="flex flex-col sm:flex-row items-center justify-betweenmb-4 ">
-            <h1 className="font-bold text-3xl text-black">{car?.name}</h1>
-            <h1 className="font-bold text-3xl text-black"> R$ {car?.price}</h1>
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+            <h1 className="font-bold text-3xl text-black">{car.name}</h1>
+            <h1 className="font-bold text-3xl text-black">R$ {car.price}</h1>
           </div>
-          // Campo que informa o modelo e versões do veiculo
-          <p>{car?.model}</p>
+
+          <p className="text-gray-600 mb-4">{car.model}</p>
+          
           <div className="w-full flex gap-6 my-4">
-            <div className="w-full flex-col gap-4">
+            <div className="w-full flex flex-col gap-4">
               <div>
-                <p>Cidade</p>
-                <strong>{car?.city}</strong>
+                <p className="text-gray-500">Cidade</p>
+                <strong className="text-lg">{car.city}</strong>
               </div>
-              <div className="w-full flex gap-6 my-4">
-                <p>Ano</p>
-                <strong>{car?.year}</strong>
+              <div className="flex items-center gap-6">
+                <p className="text-gray-500">Ano</p>
+                <strong className="text-lg">{car.year}</strong>
               </div>
-              <div className="w-full flex gap-6 my-4">
-                <p>KM</p>
-                <strong>{car?.km}</strong>
+              <div className="flex items-center gap-6">
+                <p className="text-gray-500">KM</p>
+                <strong className="text-lg">{car.km}</strong>
               </div>
             </div>
           </div>
-          <strong>Descrição</strong>
-          <p className="mb-4">{car?.description}</p>
-          <strong>Telefone/Whatsapp</strong>
-          <p>{car?.whatsapp}</p>
-          <a className="w-full flex items-center justify-center gap-2 h-11 my-6 font-mediumtext-xl text-white bg-green-500 cursor-pointer rounded-xl">
+
+          <strong className="text-xl block mb-2">Descrição</strong>
+          <p className="mb-6 text-gray-700">{car.description}</p>
+
+          <strong className="text-xl block mb-2">Telefone/Whatsapp</strong>
+          <p className="mb-4">{car.whatsapp}</p>
+
+          <a
+            href={`https://api.whatsapp.com/send?phone=${car.whatsapp}&text=Olá, vi seu anúncio do ${car.name} (${car.model}) no WebCarros e gostaria de mais informações!`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 h-11 my-6 font-medium text-xl text-white bg-green-500 hover:bg-green-600 transition-colors cursor-pointer rounded-xl"
+          >
             Falar com o vendedor
             <FaWhatsapp size={26} color="#fff" />
           </a>

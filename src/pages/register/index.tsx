@@ -1,16 +1,19 @@
 import { useEffect, useContext } from 'react'
-import logoImg from '../../assets/logo.svg'
-import { Link, useNavigate } from 'react-router-dom'
-import { Container } from '../../components/container'
-
-import { Input } from '../../components/input'
 import { useForm } from 'react-hook-form'
+import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod'
 
-import { auth } from '../../services/firebaseConnection'
-import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth'
+import toast from "react-hot-toast";
+
+import { Container } from '../../components/container'
+import logoImg from '../../assets/logo.svg'
+import { Input } from '../../components/input'
 import { AuthContext } from '../../contexts/AuthContext'
+import { auth } from '../../services/firebaseConnection'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth'
+
 
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
@@ -53,11 +56,13 @@ export function Register() {
       })
       
       console.log("CADASTRADO COM SUCESSO!")
+      toast.success("Cadastrado com sucesso!");
       navigate("/dashboard", { replace: true })
 
     })
     .catch((error) => {
       console.log("ERRO AO CADASTRAR ESTE USUARIO")
+      toast.error("Erro ao cadastrar este usuario!");
       console.log(error);
     })
 
